@@ -18,31 +18,51 @@ public class LosslessJackson {
 
         CtClass losslessClass = createSubclass(sourceClass, classPool);
 
+        addAttribute(losslessClass, "java.util.Map other = new java.util.LinkedHashMap();");
+
+        addMethodWithAnnotation(
+                losslessClass,
+                "public java.util.Map any() {   \n" +
+                    "    return other;          \n" +
+                "}",
+                ANY_GETTER_ANNOTATION);
+
+        addMethodWithAnnotation(
+                losslessClass,
+                "public void set(String name, Object value) {   \n" +
+                "    other.put(name, value);                    \n" +
+                "}",
+                ANY_SETTER_ANNOTATION);
+
+        return toClass(losslessClass);
+    }
+
+    private static Class toClass(CtClass ctClass) {
+        try {
+            return ctClass.toClass();
+        } catch (CannotCompileException e) {
+            throw new IllegalArgumentException("supplied CtClass is not compilable", e);
+        }
+    }
+
+    private static void addAttribute(CtClass losslessClass, String src) {
         try {
             CtField otherAttributesField = CtField.make(
-                    "java.util.Map other = new java.util.LinkedHashMap();",
+                    src,
                     losslessClass);
             losslessClass.addField(otherAttributesField);
-
-            CtMethod anyMethod = CtNewMethod.make(
-                    "public java.util.Map any() {\n" +
-                            "    return other;\n" +
-                            "}",
-                    losslessClass);
-            addAnnotationWithNoParams(losslessClass, anyMethod, ANY_GETTER_ANNOTATION);
-            losslessClass.addMethod(anyMethod);
-
-            CtMethod setMethod = CtNewMethod.make(
-                    "public void set(String name, Object value) {\n" +
-                            "    other.put(name, value);\n" +
-                            "}",
-                    losslessClass);
-            addAnnotationWithNoParams(losslessClass, setMethod, ANY_SETTER_ANNOTATION);
-            losslessClass.addMethod(setMethod);
-
-            return losslessClass.toClass();
         } catch (CannotCompileException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException("src is not compilable", e);
+        }
+    }
+
+    private static void addMethodWithAnnotation(CtClass ctClass, String src, String annotationClass) {
+        try {
+            CtMethod anyMethod = CtNewMethod.make(src, ctClass);
+            addAnnotationWithNoParams(ctClass, anyMethod, annotationClass);
+            ctClass.addMethod(anyMethod);
+        } catch (CannotCompileException e) {
+            throw new IllegalArgumentException("src is not compilable", e);
         }
     }
 
