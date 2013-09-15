@@ -1,9 +1,12 @@
 package com.github.tomakehurst.losslessjackson;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
 
 import static net.sf.json.test.JSONAssert.assertJsonEquals;
 
@@ -37,7 +40,7 @@ public class LosslessJacksonTest {
                 LosslessJackson.lossless(ImmutableContactDetails.class));
     }
 
-    private <T> void assertSerialisedMatchesOriginalDocument(String originalDocument, Class<T> sourceClass, Class<? extends T> generatedClass) throws Exception {
+    private <T> void assertSerialisedMatchesOriginalDocument(String originalDocument, Class<T> sourceClass, Class<? extends T> generatedClass) throws IOException {
         T deserialisedObject = objectMapper.readValue(originalDocument, generatedClass);
         String reserialisedDocument = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(deserialisedObject);
         assertJsonEquals("\nExpected:\n" + originalDocument + "\n\nActual:\n" + reserialisedDocument + "\n\n",
